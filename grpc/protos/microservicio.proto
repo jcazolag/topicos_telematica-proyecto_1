@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package microservicio;
+
+service SaludoService {
+  rpc Saludar (SaludoRequest) returns (SaludoReply) {}
+}
+
+message SaludoRequest {
+  string nombre = 1;
+}
+
+message SaludoReply {
+  string mensaje = 1;
+}

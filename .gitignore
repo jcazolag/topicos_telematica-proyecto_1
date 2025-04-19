@@ -1,0 +1,5 @@
+# ignore ALL files in ANY directory named example
+example/
+
+# ignore ALL files in ANY directory named venv
+venv/
