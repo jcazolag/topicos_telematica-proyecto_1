@@ -7,6 +7,6 @@ sudo systemctl start docker
 # Correr RabbitMQ con panel web
 sudo docker run -d --name rabbitmq \
   -p 5672:5672 -p 15672:15672 \
-  -e RABBITMQ_DEFAULT_USER=<user> \
-  -e RABBITMQ_DEFAULT_PASS=<password> \
+  -e RABBITMQ_DEFAULT_USER=microservicios \
+  -e RABBITMQ_DEFAULT_PASS=password123 \
   rabbitmq:3-management
