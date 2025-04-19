@@ -4,7 +4,7 @@ import os
 import grpc
 from dotenv import load_dotenv
 from microservicio_pb2 import SaludoRequest  # Importa las definiciones de gRPC
-from microservicio_pb2_grpc import Microservicio1Stub, Microservicio2Stub, Microservicio3Stub
+from microservicio_pb2_grpc import SaludoServiceStub
 
 # Cargar variables de entorno
 load_dotenv()
@@ -42,11 +42,12 @@ def worker():
     channel = connection.channel()
 
     # Declarar las colas
-    channel.queue_declare(queue='request_queue')
-    channel.queue_declare(queue='response_queue')
+    channel.queue_declare(queue='request_queue', durable=True)
+    channel.queue_declare(queue='response_queue', durable=True)
+
 
     # Callback para procesar los mensajes en request_queue
-    def on_request(ch, method, properties, body):
+    def on_request(ch, method, props, body):
         try:
             message = json.loads(body)
             name = message['name']
@@ -54,24 +55,19 @@ def worker():
 
             # Establecer canal gRPC para el microservicio correspondiente
             grpc_channel = get_grpc_channel(service_id)
-            if service_id == 1:
-                stub = Microservicio1Stub(grpc_channel)
-            elif service_id == 2:
-                stub = Microservicio2Stub(grpc_channel)
-            elif service_id == 3:
-                stub = Microservicio3Stub(grpc_channel)
+            stub = SaludoServiceStub(grpc_channel)
 
             # Realizar la solicitud gRPC
-            request = SaludoRequest(name=name)
+            request = SaludoRequest(nombre=name)
             response = stub.Saludar(request)  # Realiza la llamada gRPC
 
             # Enviar la respuesta a la cola de respuesta (response_queue)
             ch.basic_publish(
                 exchange='',
-                routing_key='response_queue',
-                body=json.dumps({"message": response.saludo}),
+                routing_key=props.reply_to,
+                body=json.dumps({"message": response.mensaje}),
                 properties=pika.BasicProperties(
-                    correlation_id=properties.correlation_id
+                    correlation_id=props.correlation_id
                 )
             )
             ch.basic_ack(delivery_tag=method.delivery_tag)
